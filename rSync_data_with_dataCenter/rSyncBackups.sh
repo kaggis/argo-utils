@@ -68,7 +68,7 @@ echo -e "| Backup of files to host $red$bold_on$REMOTE_HOST$bold_off$color_off b
 echo -e "---------------------------------------------------------------------------------"
 logger "[rSyncBackups] Backup of files ( $FROM_DIR ) to host $REMOTE_HOST begins at `date`"
 
-/usr/bin/rsync -zh -e "ssh -o StrictHostKeyChecking=no -i $SSH_KEY " $FROM_DIR $REMOTE_USER@$REMOTE_HOST:$REMOTE_PARENT_DIR 2>/dev/null
+/usr/bin/rsync -zah -e "ssh -o StrictHostKeyChecking=no -i $SSH_KEY " $FROM_DIR $REMOTE_USER@$REMOTE_HOST:$REMOTE_PARENT_DIR 2>/dev/null
 
 if [ "$?" -eq "0" ]
 then
