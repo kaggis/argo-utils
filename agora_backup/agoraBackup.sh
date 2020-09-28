@@ -53,7 +53,6 @@ done
 
 timestamp=$(date +%Y-%m-%d)
 web_server_conf_files="/etc/apache2/"
-web_server_log_files="/var/log/apache2/"
 database_dumps="/var/backups/agora/database"
 archives="/var/backups/agora/archives"
 
@@ -75,12 +74,11 @@ cd ${database_dumps} && \
 tar -zcvf ${archives}/${timestamp}_${HOSTNAME}.tar.gz \
 	${timestamp}_${HOSTNAME}_${DATABASE_NAME}.sql \
 	${web_server_conf_files} \
-	${web_server_log_files}
 
 
 # Delete old files
-find /var/backups/agora/* -mtime +14 -exec rm {} \;
-find /var/backups/agora/* -type d -empty -delete
+rm -rf ${database_dumps}
+find ${archives} -type f -mtime +60 -exec rm {} \;
 
 
 

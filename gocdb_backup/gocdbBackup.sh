@@ -53,7 +53,6 @@ done
 
 timestamp=$(date +%Y-%m-%d)
 web_server_conf_files="/etc/httpd/"
-web_server_log_files="/var/log/httpd/"
 gocdb_files="/var/backups/gocdb/site"
 database_dumps="/var/backups/gocdb/database"
 archives="/var/backups/gocdb/archives"
@@ -84,13 +83,12 @@ tar -zcvf ${archives}/${timestamp}_${HOSTNAME}.tar.gz \
 	${timestamp}_${HOSTNAME}_${DATABASE_NAME}.sql \
 	${timestamp}_${HOSTNAME}_gocdbFiles_sha256sum \
 	${web_server_conf_files} \
-	${web_server_log_files}
 
 rm ${database_dumps}/${timestamp}_${HOSTNAME}_gocdbFiles_sha256sum
 
 # Delete old files
-find /var/backups/gocdb/* -mtime +14 -exec rm {} \;
-find /var/backups/gocdb/* -type d -empty -delete
+rm -rf ${database_dumps}
+find ${archives} -type f -mtime +60 -exec rm {} \;
 
 
 
