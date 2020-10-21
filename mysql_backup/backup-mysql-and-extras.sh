@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #########################################################################################
-# Agora Backup - A simple script that compresses all the necessary files needed for
+# MySQL Backup - A simple script that compresses all the necessary files needed for
 # a complete backup.
 #
 # Copyright (C) 2020 GRNET.
@@ -23,43 +23,61 @@
 #	* Anastasios Lisgaras <tasos@admin.grnet.gr>
 #########################################################################################
 
-set -u
+#set -u
 set -f
 set -o pipefail
 
-while getopts h:u:p:d: option 
+while getopts h:u:p:d:f: option 
 do
 	case "${option}" in
 	h|--help)
-		echo -e "Agora Backup."
+		echo -e "MySQL Backup."
 		echo -e "------------------------------------------------------------------------------------------ "
-		echo -e "agoraBackup.sh [arguments]"
+		echo -e "mysqlBackup.sh [arguments]"
 		echo -e " "
 		echo -e "Arguments:"
 		echo -e "--help \tShow brief help."
 		echo -e "-u \tDatabase username - Specify the username that has rights in the database you want to back up."
 		echo -e "-p \tDatabase password - Specify the database user password."
 		echo -e "-d \tDatabase name\t  - Specify the name of the database for which you want to back up."
+		echo -e "-f \tDirectories or files\t  - Specify the name of the directories or files for which you want to back up."
+		echo -e "\tNote: If you want, you can also archive multiple directories or files by separating the paths of the files or directories with ':'."
 		echo -e "------------------------------------------------------------------------------------------ "
-		echo -e "Usage: ./agoraBackup.sh -u user -p 'password' -d database"
+		echo -e "Usage: ./mysqlBackup.sh -u user -p 'password' -d database -f file:directory"
 		exit 0
 		;;
 	u) DATABASE_USER=${OPTARG} ;;
 	p) DATABASE_PASSWORD=${OPTARG} ;;
 	d) DATABASE_NAME=${OPTARG} ;;
+	f) FOR_ARCHIVING=${OPTARG} ;;
 	esac
 done
 
+# Arguments validation.
+if [[ -z "$DATABASE_NAME" ]]; then
+	echo >&2 "The database name (-d) is required!"
+    exit 1
+fi
+
+if [[ -z "$DATABASE_USER" ]]; then
+	echo >&2 "The database user (-u) is required!"
+    exit 1
+fi
+
+if [[ -z "$DATABASE_PASSWORD" ]]; then
+	echo >&2 "The database password (-p) is required!"
+    exit 1
+fi
 
 timestamp=$(date +%Y-%m-%d)
-web_server_conf_files="/etc/apache2/"
-database_dumps="/var/backups/agora/database"
-archives="/var/backups/agora/archives"
+database_dumps="/var/backups/database"
+archives="/var/backups/archives"
+FOR_ARCHIVING=$(echo $FOR_ARCHIVING | sed 's/:/ /g' )
 
 
 ## Create directories if doesn't exist.
-[ ! -d $database_dumps   ] && mkdir -p ${database_dumps}
-[ ! -d $archives    ] && mkdir -p ${archives}
+[ ! -d $database_dumps	] && mkdir -p ${database_dumps}
+[ ! -d $archives		] && mkdir -p ${archives}
 
 
 # Backup files 
@@ -68,15 +86,22 @@ mysqldumb="/usr/bin/mysqldump --user='$DATABASE_USER'  --password='$DATABASE_PAS
 eval "$mysqldumb"
 
 
-# Archive
-## Archive the web server configuration files, web server logs and database.
+## Archive the hashing file of gocdb files, web server configuration files, web server logs and database.
 cd ${database_dumps} && \
 tar -zcvf ${archives}/${timestamp}_${HOSTNAME}.tar.gz \
 	${timestamp}_${HOSTNAME}_${DATABASE_NAME}.sql \
-	${web_server_conf_files} \
+	${FOR_ARCHIVING} 
 
 
-# Delete old files
+# Logs
+if [[ $? -eq 0 ]]; then
+    logger "[mySQLBackupScript] Executed successfully"
+else
+    logger "[mySQLBackupScript] Failed to execute"
+fi
+
+
+# Delete unnecessary files
 rm -rf ${database_dumps}
 find ${archives} -type f -mtime +60 -exec rm {} \;
 
