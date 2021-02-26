@@ -1,0 +1,14 @@
+[
+    {
+        "tenant":"TENANTA",
+        "streaming":["status","ops"]
+    },
+    {
+        "tenant":"TENANTB",
+        "streaming":["status"]
+    },
+    {
+        "tenant": "TENANTC",
+        "streaming": []
+    }
+]
